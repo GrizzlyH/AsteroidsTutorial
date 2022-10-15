@@ -40,7 +40,13 @@ def gameWindowUpdating():
     #  Background Image
     GAMESCREEN.blit(BGIMG, (0, 0))
 
+    #  Draw the other game objects
+    for bullet in playerBullets:
+        bullet.draw(GAMESCREEN)
+
+    #  Draw the player Character on Screen
     player.draw(GAMESCREEN)
+
 
     pygame.display.update()
 
@@ -93,6 +99,33 @@ class Player:
         window.blit(rotated_img, blit_pos)
 
 
+class Bullet:
+    def __init__(self, coOrds, direction):
+        self.width = 4
+        self.height = 4
+        self.pos = Vector2(coOrds[0], coOrds[1])
+        self.direction = Vector2(direction[0], direction[1])
+        self.velocity = Vector2()
+        self.speed = 10
+
+
+    def move(self):
+        """Updates the position of the bullet"""
+        self.pos += (self.direction * self.speed)
+
+
+    def _check_if_offscreen(self):
+        """Checks to see if the object is off the screen"""
+        if self.pos[0] < 0 or self.pos[0] > SCREENWIDTH or self.pos[1] < 0 or self.pos[1] > SCREENHEIGHT:
+            return True
+
+
+    def draw(self, window):
+        """Updates the position of the Object"""
+        pygame.draw.rect(window, (255, 255, 255), [self.pos[0], self.pos[1], self.width, self.height])
+
+
+
 #  Game Settings Variables
 SCREENWIDTH = 1280
 SCREENHEIGHT = 960
@@ -126,12 +159,24 @@ asteroidImageLoading()
 player = Player(PlayerImg, (SCREENWIDTH//2, SCREENHEIGHT//2))
 
 
+#  Game Object Lists
+playerBullets = []
+
+
 #  Main Game Loop
 RUNGAME = True
 while RUNGAME:
 
+
     #  Update game object movements
     player.move()
+    for ind, bullet in enumerate(playerBullets):    #  Cycle through each of the bullet objects
+        bullet.move()
+
+        #  Check to see if the bullet object is offscreen
+        if bullet._check_if_offscreen():
+            del playerBullets[ind]
+            break
 
 
     #  Event handling for loop, check for quit, and Escape key
@@ -141,6 +186,9 @@ while RUNGAME:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 RUNGAME = False
+            if event.key == pygame.K_SPACE:
+                playerBullets.append(Bullet(player.pos, player.direction))
+
 
     #  Handling input
     keys_pressed = pygame.key.get_pressed()
@@ -150,6 +198,7 @@ while RUNGAME:
         player.rotation(1)
     elif keys_pressed[pygame.K_UP] or keys_pressed[pygame.K_w]:
         player.accelerate()
+
 
     gameWindowUpdating()
     CLOCK.tick(60)
